@@ -1,11 +1,15 @@
-package handlers
+package task
 
 import (
 	"log"
 	"net/http"
+
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-type TaskHandler struct{}
+type TaskHandler struct {
+	DB *pgxpool.Pool
+}
 
 func (h *TaskHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
