@@ -1,20 +1,12 @@
-CREATE TABLE users (
+CREATE TABLE tokens (
 			id BIGSERIAL PRIMARY KEY,
-			email varchar(255) NOT NULL UNIQUE,
-			password text NOT NULL,
+			user_id integer REFERENCES users (id), 
+			value varchar(255) NOT NULL UNIQUE,
 			created timestamp NOT NULL DEFAULT now(),
 			updated timestamp
 		);
 
-CREATE OR REPLACE FUNCTION set_updated_at()
-RETURNS TRIGGER AS $$
-BEGIN 
-    NEW.updated = now();
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER users_set_updated_at
-BEFORE UPDATE ON users
+CREATE TRIGGER tokens_set_updated_at
+BEFORE UPDATE ON tokens
 FOR EACH ROW
 EXECUTE FUNCTION set_updated_at();

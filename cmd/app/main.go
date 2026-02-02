@@ -23,17 +23,18 @@ func main() {
 		panic(err)
 	}
 
+	userRepo := userV1.NewRepository(pool)
+	userService := userV1.NewService(userRepo)
+	userHandler := userV1.NewHandler(userService)
+
 	tasks := &taskV1.TaskHandler{
-		DB: pool,
-	}
-	users := &userV1.UserHandler{
 		DB: pool,
 	}
 
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/api/v1/auth/register", users.Register)
-	mux.HandleFunc("/api/v1/auth/login", users.Login)
+	mux.HandleFunc("/api/v1/auth/register", userHandler.Register)
+	mux.HandleFunc("/api/v1/auth/login", userHandler.Login)
 
 	mux.HandleFunc("/api/v1/tasks", tasks.Handle)
 	mux.HandleFunc("/api/v1/tasks/", tasks.HandleOne)
