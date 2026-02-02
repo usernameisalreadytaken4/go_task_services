@@ -1,0 +1,11 @@
+services:
+  local-task-db:
+    image: postgres:18.1-alpine3.23
+    container_name: local-task-db
+    ports:
+      - '5432:5432'
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=my_password
+      - POSTGRES_DB=task_service
+      
