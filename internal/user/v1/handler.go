@@ -1,15 +1,11 @@
 package user
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"log"
 	"net/http"
 	"net/mail"
-
-	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type RegisterBody struct {
@@ -18,8 +14,14 @@ type RegisterBody struct {
 }
 
 type UserHandler struct {
-	DB *pgxpool.Pool
+	service UserService
 }
+
+var (
+	ErrUserAlreadyExists  = errors.New("User already exists")
+	ErrInternalError      = errors.New("Internal Error")
+	ErrInvalidCredentials = errors.New("Invalid credentials")
+)
 
 func ValidateEmail(email string) error {
 	if len(email) == 0 {
@@ -55,47 +57,63 @@ func (h *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	user, err := h.createUser(reg.Email, reg.Password)
+	user, err := h.service.CreateUser(reg.Email, reg.Password)
 	if err != nil {
-		log.Println("DB error:", err.Error()) // логируем и делаем отправку в центри, например
-		http.Error(w, "Internal Error. We are working on it", http.StatusInternalServerError)
+		switch err {
+		case ErrInternalError:
+			log.Println(err.Error())
+			http.Error(w, "Internal Error. We are working on it", http.StatusInternalServerError)
+		case ErrUserAlreadyExists:
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		default:
+			log.Println(err.Error())
+			http.Error(w, "Internal Error. We are working on it", http.StatusInternalServerError)
+		}
 		return
 	}
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(&user)
 }
 
-func (h *UserHandler) createUser(email, password string) (*User, error) {
-	user := &User{
-		Email: email,
+func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
+	email, pass, ok := r.BasicAuth()
+	if !ok {
+		http.Error(w, ErrInvalidCredentials.Error(), http.StatusUnauthorized)
+		return
 	}
-	err := h.DB.QueryRow(
-		context.Background(),
-		`SELECT * FROM users WHERE email = $1`,
-		user.Email).Scan(&user.ID, &user.Email, &user.Password, &user.Created, &user.Updated)
-	if err != nil && err != pgx.ErrNoRows {
-		log.Println(err.Error())
-		return user, errors.New("Internal Error, we working on at")
-	}
-	if err != pgx.ErrNoRows {
-		// придумать отдельные статус коды
-		return user, errors.New("User is exists")
+	user, err := h.service.GetUser(email, pass)
+	switch err {
+	case ErrInvalidCredentials:
+		http.Error(w, ErrInternalError.Error(), http.StatusUnauthorized)
+		return
+	case ErrInternalError:
+		http.Error(w, "Internal error", http.StatusInternalServerError)
+		return
 	}
 
-	user.SetPassword(password)
-
-	err = h.DB.QueryRow(
-		context.Background(),
-		`INSERT INTO users(email, password) VALUES ($1, $2)
-		RETURNING id, email, password, created, updated`,
-		user.Email, user.Password).Scan(&user.ID, &user.Email, &user.Password, &user.Created, &user.Updated)
+	token, err := h.service.GetTokenByUser(user)
 	if err != nil {
-		return user, err
+		switch err {
+		case ErrInternalError:
+			http.Error(w, "Internal Error", http.StatusInternalServerError)
+			return
+		default:
+			http.Error(w, "Internal Error", http.StatusInternalServerError)
+			return
+		}
 	}
 
-	return user, nil
+	tokenMap := make(map[string]string)
+
+	tokenMap["instruction"] = "Use Authorization Header with Bearer <Token>"
+	tokenMap["token"] = token
+
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(&tokenMap)
 }
 
-func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
-
+func NewHandler(service *UserService) *UserHandler {
+	return &UserHandler{
+		service: *service,
+	}
 }
