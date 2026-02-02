@@ -3,7 +3,6 @@ package user
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"log"
 	"net/http"
 	"net/mail"
@@ -19,8 +18,9 @@ type UserHandler struct {
 }
 
 var (
-	ErrUserAlreadyExists = errors.New("User already exists")
-	ErrInternalError     = errors.New("Internal Error")
+	ErrUserAlreadyExists  = errors.New("User already exists")
+	ErrInternalError      = errors.New("Internal Error")
+	ErrInvalidCredentials = errors.New("Invalid credentials")
 )
 
 func ValidateEmail(email string) error {
@@ -76,9 +76,40 @@ func (h *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
-	user, pass, ok := r.BasicAuth()
-	fmt.Println(user, pass, ok)
+	email, pass, ok := r.BasicAuth()
+	if !ok {
+		http.Error(w, ErrInvalidCredentials.Error(), http.StatusUnauthorized)
+		return
+	}
+	user, err := h.service.GetUser(email, pass)
+	switch err {
+	case ErrInvalidCredentials:
+		http.Error(w, ErrInternalError.Error(), http.StatusUnauthorized)
+		return
+	case ErrInternalError:
+		http.Error(w, "Internal error", http.StatusInternalServerError)
+		return
+	}
 
+	token, err := h.service.GetTokenByUser(user)
+	if err != nil {
+		switch err {
+		case ErrInternalError:
+			http.Error(w, "Internal Error", http.StatusInternalServerError)
+			return
+		default:
+			http.Error(w, "Internal Error", http.StatusInternalServerError)
+			return
+		}
+	}
+
+	tokenMap := make(map[string]string)
+
+	tokenMap["instruction"] = "Use Authorization Header with Bearer <Token>"
+	tokenMap["token"] = token
+
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(&tokenMap)
 }
 
 func NewHandler(service *UserService) *UserHandler {

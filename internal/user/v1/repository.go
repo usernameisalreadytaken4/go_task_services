@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -16,7 +17,7 @@ func (r *UserRepository) GetByEmail(email string) (*User, error) {
 	err := r.DB.QueryRow(
 		context.Background(),
 		`SELECT * FROM users WHERE email = $1`,
-		user.Email).Scan(&user.ID, &user.Email, &user.Password, &user.Created, &user.Updated)
+		email).Scan(&user.ID, &user.Email, &user.Password, &user.Created, &user.Updated)
 	if err != nil {
 		return nil, err
 	}
@@ -41,6 +42,31 @@ func (r *UserRepository) CreateUser(email, password string) (*User, error) {
 		return nil, ErrInternalError
 	}
 	return user, nil
+}
+
+func (r *UserRepository) GetTokenByUser(user User) (string, error) {
+	var token Token
+
+	err := r.DB.QueryRow(
+		context.Background(),
+		`SELECT value FROM tokens WHERE user_id = $1`,
+		user.ID).Scan(&token.Value)
+	if err != nil && err != pgx.ErrNoRows {
+		return "", err
+	}
+
+	if err == nil {
+		r.DB.Exec(context.Background(), `DELETE FROM tokens WHERE user_id = $1`, user.ID)
+	}
+
+	tokenName, _ := token.CreateToken()
+	r.DB.Exec(
+		context.Background(),
+		`INSERT INTO tokens (user_id, value) VALUES ($1, $2)`,
+		user.ID, token.Value)
+
+	return tokenName, nil
+
 }
 
 func NewRepository(db *pgxpool.Pool) *UserRepository {

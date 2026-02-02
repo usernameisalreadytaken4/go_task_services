@@ -2,18 +2,44 @@ package user
 
 import (
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
 )
 
+func RandomToken() string {
+	b := make([]byte, 32)
+	rand.Read(b)
+	return hex.EncodeToString(b)
+}
+
+func HashToken(token string) string {
+	h := sha256.Sum256([]byte(token))
+	return hex.EncodeToString(h[:])
+}
+
 type Token struct {
 	ID      int64      `json:"-"`
 	User    User       `json:"-"`
-	Value   string     `json:"value"`
+	Value   string     `json:"-"`
 	Created time.Time  `json:"-"`
 	Updated *time.Time `json:"-"`
+}
+
+func (t *Token) ValidateToken(token string) error {
+	if HashToken(token) != t.Value {
+		return errors.New("Invalid token")
+	}
+	return nil
+}
+
+func (t *Token) CreateToken() (string, error) {
+	newToken := RandomToken()
+	t.Value = HashToken(newToken)
+	return newToken, nil
 }
 
 type User struct {

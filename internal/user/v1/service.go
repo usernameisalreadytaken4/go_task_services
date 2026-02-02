@@ -1,6 +1,8 @@
 package user
 
-import "log"
+import (
+	"log"
+)
 
 type UserService struct {
 	repo UserRepository
@@ -24,6 +26,15 @@ func (s *UserService) GetUser(email, password string) (*User, error) {
 		return nil, err
 	}
 	return user, nil
+}
+
+func (s *UserService) GetTokenByUser(user *User) (string, error) {
+	token, err := s.repo.GetTokenByUser(*user)
+	if err != nil {
+		log.Println(err.Error())
+		return "", ErrInternalError
+	}
+	return token, nil
 }
 
 func NewService(repo *UserRepository) *UserService {
