@@ -27,17 +27,17 @@ func main() {
 	userService := userV1.NewService(userRepo)
 	userHandler := userV1.NewHandler(userService)
 
-	tasks := &taskV1.TaskHandler{
-		DB: pool,
-	}
+	taskRepo := taskV1.NewRepository(pool)
+	taskService := taskV1.NewService(taskRepo)
+	taskHandler := taskV1.NewHandler(taskService)
 
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/api/v1/auth/register", userHandler.Register)
 	mux.HandleFunc("/api/v1/auth/login", userHandler.Login)
 
-	mux.HandleFunc("/api/v1/tasks", tasks.Handle)
-	mux.HandleFunc("/api/v1/tasks/", tasks.HandleOne)
+	mux.HandleFunc("/api/v1/tasks", taskHandler.Handle)
+	mux.HandleFunc("/api/v1/tasks/", taskHandler.HandleOne)
 
 	http.Handle("/", mux)
 

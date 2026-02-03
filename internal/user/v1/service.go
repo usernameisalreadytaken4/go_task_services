@@ -5,7 +5,7 @@ import (
 )
 
 type UserService struct {
-	repo UserRepository
+	repo *UserRepository
 }
 
 func (s *UserService) CreateUser(email, password string) (*User, error) {
@@ -39,6 +39,6 @@ func (s *UserService) GetTokenByUser(user *User) (string, error) {
 
 func NewService(repo *UserRepository) *UserService {
 	return &UserService{
-		repo: *repo,
+		repo: repo,
 	}
 }

@@ -3,12 +3,10 @@ package task
 import (
 	"log"
 	"net/http"
-
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type TaskHandler struct {
-	DB *pgxpool.Pool
+	service TaskService
 }
 
 func (h *TaskHandler) Handle(w http.ResponseWriter, r *http.Request) {
@@ -28,5 +26,11 @@ func (h *TaskHandler) HandleOne(w http.ResponseWriter, r *http.Request) {
 		log.Println("Method GET")
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+func NewHandler(service *TaskService) *TaskHandler {
+	return &TaskHandler{
+		service: *service,
 	}
 }
