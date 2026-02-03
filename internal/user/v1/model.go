@@ -23,7 +23,7 @@ func HashToken(token string) string {
 
 type Token struct {
 	ID      int64      `json:"-"`
-	User    User       `json:"-"`
+	UserID  int64      `json:"-"`
 	Value   string     `json:"-"`
 	Created time.Time  `json:"-"`
 	Updated *time.Time `json:"-"`

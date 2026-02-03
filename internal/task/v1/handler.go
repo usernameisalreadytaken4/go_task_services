@@ -1,20 +1,26 @@
 package task
 
 import (
-	"log"
 	"net/http"
 )
+
+type PayloadRequest struct {
+	Type TaskType
+	Text string
+}
 
 type TaskHandler struct {
 	service TaskService
 }
 
 func (h *TaskHandler) Handle(w http.ResponseWriter, r *http.Request) {
+	// user := GetUserByToken()
+
 	switch r.Method {
 	case http.MethodGet:
-		log.Println("METHOD GET")
+		// h.service.GetTasksByUser(user)
 	case http.MethodPost:
-		log.Println("METHOD POST")
+		// h.service.CreateTask(user, payload)
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
@@ -23,7 +29,7 @@ func (h *TaskHandler) Handle(w http.ResponseWriter, r *http.Request) {
 func (h *TaskHandler) HandleOne(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
-		log.Println("Method GET")
+		// h.service.GetTaskByUser(user)
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
