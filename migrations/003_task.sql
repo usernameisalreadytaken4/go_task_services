@@ -1,7 +1,6 @@
 CREATE TABLE tasks (
 			id BIGSERIAL PRIMARY KEY,
 			user_id integer REFERENCES users (id), 
-			value varchar(255) NOT NULL UNIQUE,
 			payload JSONB NOT NULL DEFAULT '{}',
 			result JSONB NOT NULL DEFAULT '{}',
             started timestamp,

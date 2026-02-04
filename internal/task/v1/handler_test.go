@@ -1,15 +1,15 @@
 package task
 
 import (
-	"context"
+	"bytes"
 	"encoding/json"
+	"io"
 	"log"
-	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
 
-	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/golang/mock/gomock"
 )
 
 type TaskTestCase struct {
@@ -40,74 +40,80 @@ func TestTaskHandle(t *testing.T) {
 		"text": "Nobody cares",
 	})
 
-	longTaskPayload, _ := json.Marshal(map[string]string{
-		"type": "long_task",
-		"text": "Everybody cares",
-	})
+	// longTaskPayload, _ := json.Marshal(map[string]string{
+	// 	"type": "long_task",
+	// 	"text": "Everybody cares",
+	// })
 
-	dsn := "postgres://postgres:my_password@localhost:5432/task_service"
-	// temporary. Will be changed to mocks
-	config, _ := pgxpool.ParseConfig(dsn)
-	pool, _ := pgxpool.NewWithConfig(context.Background(), config)
-	err := pool.Ping(context.Background())
-	if err != nil {
-		panic(err)
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockedService := NewMockService(ctrl)
+	handler := &Handler{
+		service: mockedService,
 	}
 
-	mux := http.NewServeMux()
+	var body io.Reader = bytes.NewReader(shortTaskPayload)
 
-	taskRepo := NewRepository(pool)
-	taskService := NewService(taskRepo)
-	taskHandler := NewHandler(taskService)
+	req := httptest.NewRequest("POST", "/api/v1/tasks", body)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer testtoken")
 
-	TaskRouter(mux, taskHandler)
-	ts := httptest.NewServer(mux)
+	w := httptest.NewRecorder()
 
-	log.Panicln(ts)
+	handler.Handle(w, req)
 
-	testCases := []*TaskTestCase{
-		&TaskTestCase{
-			Name:               "Create Short Task",
-			Method:             "POST",
-			URL:                "/api/v1/tasks",
-			ResponseHTTPStatus: 201,
-			Payload:            shortTaskPayload,
-			Expected: func() interface{} {
-				return &struct {
-					Task TestTask
-				}{
-					Task: TestTask{
-						Name:   "short_task",
-						Status: "new",
-					},
-				}
-			},
-		},
-		&TaskTestCase{
-			Name:               "Create Long Task",
-			Method:             "POST",
-			URL:                "/api/v1/tasks",
-			ResponseHTTPStatus: 201,
-			Payload:            longTaskPayload,
-			Expected: func() interface{} {
-				return &struct {
-					Task TestTask
-				}{
-					Task: TestTask{
-						Name:   "long_task",
-						Status: "new",
-					},
-				}
-			},
-		},
-	}
+	resp := w.Result()
 
-	for _, testCase := range testCases {
-		ok := t.Run(testCase.Name, func(t *testing.T) {
-			// make some things
-		})
-		if !ok {
-			break
-		}
-	}
+	log.Println(resp)
+
+	// mockedService.EXPECT().GetByUserID(1).Return(result, nil)
+
+	// log.Panicln(ts)
+
+	// testCases := []*TaskTestCase{
+	// 	{
+	// 		Name:               "Create Short Task",
+	// 		Method:             "POST",
+	// 		URL:                "/api/v1/tasks",
+	// 		ResponseHTTPStatus: 201,
+	// 		Payload:            shortTaskPayload,
+	// 		Expected: func() interface{} {
+	// 			return &struct {
+	// 				Task TestTask
+	// 			}{
+	// 				Task: TestTask{
+	// 					Name:   "short_task",
+	// 					Status: "new",
+	// 				},
+	// 			}
+	// 		},
+	// 	},
+	// 	{
+	// 		Name:               "Create Long Task",
+	// 		Method:             "POST",
+	// 		URL:                "/api/v1/tasks",
+	// 		ResponseHTTPStatus: 201,
+	// 		Payload:            longTaskPayload,
+	// 		Expected: func() interface{} {
+	// 			return &struct {
+	// 				Task TestTask
+	// 			}{
+	// 				Task: TestTask{
+	// 					Name:   "long_task",
+	// 					Status: "new",
+	// 				},
+	// 			}
+	// 		},
+	// 	},
+	// }
+
+	// for _, testCase := range testCases {
+	// 	ok := t.Run(testCase.Name, func(t *testing.T) {
+	// 		// make some things
+	// 	})
+	// 	if !ok {
+	// 		break
+	// 	}
+	// }
 }
