@@ -8,11 +8,17 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-type UserRepository struct {
+type repository struct {
 	DB *pgxpool.Pool
 }
 
-func (r *UserRepository) GetByEmail(email string) (*User, error) {
+type Repository interface {
+	Create(string, string) (*User, error)
+	GetByEmail(string) (*User, error)
+	GetToken(User) (string, error)
+}
+
+func (r *repository) GetByEmail(email string) (*User, error) {
 	var user User
 	err := r.DB.QueryRow(
 		context.Background(),
@@ -24,7 +30,7 @@ func (r *UserRepository) GetByEmail(email string) (*User, error) {
 	return &user, nil
 }
 
-func (r *UserRepository) CreateUser(email, password string) (*User, error) {
+func (r *repository) Create(email, password string) (*User, error) {
 
 	user := &User{
 		Email: email,
@@ -44,7 +50,7 @@ func (r *UserRepository) CreateUser(email, password string) (*User, error) {
 	return user, nil
 }
 
-func (r *UserRepository) GetTokenByUser(user User) (string, error) {
+func (r *repository) GetToken(user User) (string, error) {
 	var token Token
 
 	err := r.DB.QueryRow(
@@ -69,8 +75,8 @@ func (r *UserRepository) GetTokenByUser(user User) (string, error) {
 
 }
 
-func NewRepository(db *pgxpool.Pool) *UserRepository {
-	return &UserRepository{
+func NewRepository(db *pgxpool.Pool) Repository {
+	return &repository{
 		DB: db,
 	}
 }

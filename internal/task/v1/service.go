@@ -1,11 +1,17 @@
 package task
 
-type TaskService struct {
-	repo *TaskRepository
+type service struct {
+	repo Repository
 }
 
-func NewService(repo *TaskRepository) *TaskService {
-	return &TaskService{
+type Service interface {
+	// Create(*Task) error
+	// Get(int) (*Task, error)
+	// GetByUserID(int) ([]*Task, error)
+}
+
+func NewService(repo Repository) Service {
+	return &service{
 		repo: repo,
 	}
 }

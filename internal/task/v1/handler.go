@@ -9,11 +9,11 @@ type PayloadRequest struct {
 	Text string
 }
 
-type TaskHandler struct {
-	service TaskService
+type Handler struct {
+	service Service
 }
 
-func (h *TaskHandler) Handle(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) Handle(w http.ResponseWriter, r *http.Request) {
 	// user := GetUserByToken()
 
 	switch r.Method {
@@ -26,7 +26,7 @@ func (h *TaskHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *TaskHandler) HandleOne(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) HandleOne(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
 		// h.service.GetTaskByUser(user)
@@ -35,8 +35,8 @@ func (h *TaskHandler) HandleOne(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func NewHandler(service *TaskService) *TaskHandler {
-	return &TaskHandler{
-		service: *service,
+func NewHandler(service Service) *Handler {
+	return &Handler{
+		service: service,
 	}
 }
