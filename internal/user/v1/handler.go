@@ -57,7 +57,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	user, err := h.service.CreateUser(reg.Email, reg.Password)
+	user, err := h.service.CreateUser(r.Context(), reg.Email, reg.Password)
 	if err != nil {
 		switch err {
 		case ErrInternalError:
@@ -81,7 +81,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, ErrInvalidCredentials.Error(), http.StatusUnauthorized)
 		return
 	}
-	user, err := h.service.GetUser(email, pass)
+	user, err := h.service.GetUser(r.Context(), email, pass)
 	switch err {
 	case ErrInvalidCredentials:
 		http.Error(w, ErrInternalError.Error(), http.StatusUnauthorized)
@@ -91,7 +91,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := h.service.GetTokenByUser(user)
+	token, err := h.service.GetTokenByUser(r.Context(), user)
 	if err != nil {
 		switch err {
 		case ErrInternalError:

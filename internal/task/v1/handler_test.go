@@ -2,6 +2,7 @@ package task
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -40,6 +41,7 @@ func TestTaskHandle(t *testing.T) {
 	// проверяю как работают моки
 	// в целом, тут это стрельба из пушек по воробьям, много нагородил, чтобы показать что возвращается Created
 	// но в более сложных сервисах с более сложной логикой, или в тестировании самих сервисов это будет эффективнее
+	// а вообще даже это пригодилось, когда добавлял сквозной контекст
 
 	shortTaskPayload, _ := json.Marshal(map[string]string{
 		"type": "short_task",
@@ -74,8 +76,8 @@ func TestTaskHandle(t *testing.T) {
 	w := httptest.NewRecorder()
 
 	mockedService.EXPECT().
-		Create(testUser, gomock.Any()).
-		DoAndReturn(func(u *userV1.User, task *Task) (*Task, error) {
+		Create(gomock.Any(), testUser, gomock.Any()).
+		DoAndReturn(func(ctx context.Context, u *userV1.User, task *Task) (*Task, error) {
 			if task.Name != "short_task" {
 				t.Errorf("wrong name\nEXPECTED: %v\nGET: %v\n", "short_task", task.Name)
 			}

@@ -12,22 +12,29 @@ type repository struct {
 }
 
 type Repository interface {
-	Save(*Task) (*Task, error)
-	// GetByID(int) (*Task, error)
-	// GetByUserID(int) ([]*Task, error)
+	Save(context.Context, *Task) (*Task, error)
+	// GetByID(ctx, int) (*Task, error)
+	// GetByUserID(ctx, int) ([]*Task, error)
 }
 
-func (r *repository) Save(task *Task) (*Task, error) {
+func (r *repository) Save(ctx context.Context, task *Task) (*Task, error) {
 	err := r.DB.QueryRow(
-		context.Background(),
-		`INSERT INTO tasks(user_id, payload) VALUES ($1, $2)
+		ctx,
+		`INSERT INTO tasks(user_id, payload, status) VALUES ($1, $2)
 		RETURNING id, created`,
-		task.User.ID, task.Payload).Scan(&task.ID, &task.Created)
+		task.User.ID, task.Payload).Scan(&task.ID, &task.Created, &task.Status)
 	if err != nil {
 		log.Println("Insert error:", err.Error())
 		return nil, ErrInternalError
 	}
 	return task, nil
+}
+
+func (r *repository) GetByID(ID int) (*Task, error) {
+	return nil, nil
+}
+func (r *repository) GetByUserID(UserID int) (*Task, error) {
+	return nil, nil
 }
 
 func NewRepository(db *pgxpool.Pool) Repository {

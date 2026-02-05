@@ -5,6 +5,7 @@
 package task
 
 import (
+	context "context"
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
@@ -35,46 +36,46 @@ func (m *MockService) EXPECT() *MockServiceMockRecorder {
 }
 
 // Create mocks base method.
-func (m *MockService) Create(arg0 *v1.User, arg1 *Task) (*Task, error) {
+func (m *MockService) Create(arg0 context.Context, arg1 *v1.User, arg2 *Task) (*Task, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Create", arg0, arg1)
+	ret := m.ctrl.Call(m, "Create", arg0, arg1, arg2)
 	ret0, _ := ret[0].(*Task)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Create indicates an expected call of Create.
-func (mr *MockServiceMockRecorder) Create(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockServiceMockRecorder) Create(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockService)(nil).Create), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockService)(nil).Create), arg0, arg1, arg2)
 }
 
 // Get mocks base method.
-func (m *MockService) Get(arg0 int) (*Task, error) {
+func (m *MockService) Get(arg0 context.Context, arg1 int) (*Task, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Get", arg0)
+	ret := m.ctrl.Call(m, "Get", arg0, arg1)
 	ret0, _ := ret[0].(*Task)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Get indicates an expected call of Get.
-func (mr *MockServiceMockRecorder) Get(arg0 interface{}) *gomock.Call {
+func (mr *MockServiceMockRecorder) Get(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockService)(nil).Get), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockService)(nil).Get), arg0, arg1)
 }
 
 // GetByUserID mocks base method.
-func (m *MockService) GetByUserID(arg0 int) ([]*Task, error) {
+func (m *MockService) GetByUserID(arg0 context.Context, arg1 int) ([]*Task, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetByUserID", arg0)
+	ret := m.ctrl.Call(m, "GetByUserID", arg0, arg1)
 	ret0, _ := ret[0].([]*Task)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetByUserID indicates an expected call of GetByUserID.
-func (mr *MockServiceMockRecorder) GetByUserID(arg0 interface{}) *gomock.Call {
+func (mr *MockServiceMockRecorder) GetByUserID(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByUserID", reflect.TypeOf((*MockService)(nil).GetByUserID), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByUserID", reflect.TypeOf((*MockService)(nil).GetByUserID), arg0, arg1)
 }

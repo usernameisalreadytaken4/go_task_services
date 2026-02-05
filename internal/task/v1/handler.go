@@ -51,7 +51,7 @@ func (h *Handler) Handle(w http.ResponseWriter, r *http.Request) {
 			Name:    payload.Type,
 			Payload: raw,
 		}
-		task, err = h.service.Create(user, task)
+		task, err = h.service.Create(r.Context(), user, task)
 		if err != nil {
 			http.Error(w, ErrInternalError.Error(), http.StatusInternalServerError)
 		}

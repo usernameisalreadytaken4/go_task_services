@@ -19,7 +19,7 @@ const userContextKey contextKey = "user"
 func GetUserByToken(pool *pgxpool.Pool, r *http.Request) (*userV1.User, error) {
 	bearer := r.Header.Get("Authorization")
 
-	if bearer == "" || strings.HasPrefix(bearer, "Bearer ") {
+	if bearer == "" || !strings.HasPrefix(bearer, "Bearer ") {
 		return nil, errors.New("Unauthorized")
 	}
 

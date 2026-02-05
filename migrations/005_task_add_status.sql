@@ -1,0 +1,1 @@
+alter table tasks add column "status" varchar(16) default 'new';

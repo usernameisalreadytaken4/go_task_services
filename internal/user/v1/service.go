@@ -1,6 +1,7 @@
 package user
 
 import (
+	"context"
 	"log"
 )
 
@@ -9,21 +10,21 @@ type service struct {
 }
 
 type Service interface {
-	GetUser(string, string) (*User, error) // для создания не факт, что лучше передавать string string
-	CreateUser(string, string) (*User, error)
-	GetTokenByUser(*User) (string, error)
+	GetUser(context.Context, string, string) (*User, error) // для создания не факт, что лучше передавать string string
+	CreateUser(context.Context, string, string) (*User, error)
+	GetTokenByUser(context.Context, *User) (string, error)
 }
 
-func (s *service) CreateUser(email, password string) (*User, error) {
-	_, err := s.repo.GetByEmail(email)
+func (s *service) CreateUser(ctx context.Context, email, password string) (*User, error) {
+	_, err := s.repo.GetByEmail(ctx, email)
 	if err == nil {
 		return nil, ErrUserAlreadyExists
 	}
-	return s.repo.Create(email, password)
+	return s.repo.Create(ctx, email, password)
 }
 
-func (s *service) GetUser(email, password string) (*User, error) {
-	user, err := s.repo.GetByEmail(email)
+func (s *service) GetUser(ctx context.Context, email, password string) (*User, error) {
+	user, err := s.repo.GetByEmail(ctx, email)
 	if err != nil {
 		log.Println(err.Error())
 		return nil, ErrInternalError
@@ -34,8 +35,8 @@ func (s *service) GetUser(email, password string) (*User, error) {
 	return user, nil
 }
 
-func (s *service) GetTokenByUser(user *User) (string, error) {
-	token, err := s.repo.GetToken(*user)
+func (s *service) GetTokenByUser(ctx context.Context, user *User) (string, error) {
+	token, err := s.repo.GetToken(ctx, *user)
 	if err != nil {
 		log.Println(err.Error())
 		return "", ErrInternalError
