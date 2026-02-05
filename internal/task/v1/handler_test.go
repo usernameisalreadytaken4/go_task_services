@@ -78,8 +78,8 @@ func TestTaskHandle(t *testing.T) {
 	mockedService.EXPECT().
 		Create(gomock.Any(), testUser, gomock.Any()).
 		DoAndReturn(func(ctx context.Context, u *userV1.User, task *Task) (*Task, error) {
-			if task.Name != "short_task" {
-				t.Errorf("wrong name\nEXPECTED: %v\nGET: %v\n", "short_task", task.Name)
+			if task.Type != "short_task" {
+				t.Errorf("wrong name\nEXPECTED: %v\nGET: %v\n", "short_task", task.Type)
 			}
 			return &Task{ID: 1}, nil
 		})

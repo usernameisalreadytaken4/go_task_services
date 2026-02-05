@@ -11,7 +11,7 @@ type TaskType string
 
 type Task struct {
 	ID       int             `json:"id"`
-	Name     TaskType        `json:"name"`
+	Type     TaskType        `json:"type"`
 	Created  time.Time       `json:"created"`
 	Started  *time.Time      `json:"start_at"`
 	Finished *time.Time      `json:"finish_at"`

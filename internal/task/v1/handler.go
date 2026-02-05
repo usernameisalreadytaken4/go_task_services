@@ -3,7 +3,10 @@ package task
 import (
 	"encoding/json"
 	"errors"
+	"log"
 	"net/http"
+	"strconv"
+	"strings"
 
 	internal "github.com/usernameisalreadytaken4/go_task_services/internal"
 )
@@ -15,6 +18,7 @@ type PayloadRequest struct {
 
 var (
 	ErrInternalError = errors.New("Internal Error")
+	ErrNotFound      = errors.New("Not found")
 )
 
 type Handler struct {
@@ -31,7 +35,21 @@ func (h *Handler) Handle(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case http.MethodGet:
-		// h.service.GetTasksByUser(user)
+		task, err := h.service.GetByUserID(r.Context(), user.ID)
+		if err != nil {
+			switch err {
+			case ErrNotFound:
+				http.Error(w, err.Error(), http.StatusNotFound)
+				return
+			default:
+				log.Println(err)
+				http.Error(w, "Internal error", http.StatusInternalServerError)
+				return
+			}
+		}
+		w.WriteHeader(http.StatusAccepted)
+		json.NewEncoder(w).Encode(task)
+		return
 	case http.MethodPost:
 
 		var payload PayloadRequest
@@ -48,7 +66,7 @@ func (h *Handler) Handle(w http.ResponseWriter, r *http.Request) {
 
 		task := &Task{
 			User:    user,
-			Name:    payload.Type,
+			Type:    payload.Type,
 			Payload: raw,
 		}
 		task, err = h.service.Create(r.Context(), user, task)
@@ -65,9 +83,40 @@ func (h *Handler) Handle(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) HandleOne(w http.ResponseWriter, r *http.Request) {
+
+	path := r.URL.Path
+	parts := strings.Split(path, "/")
+	idStr := parts[len(parts)-1]
+
+	ID, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "not found", http.StatusNotFound)
+		return
+	}
+
+	user, ok := internal.UserFromContext(r.Context())
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
 	switch r.Method {
 	case http.MethodGet:
-		// h.service.GetTaskByUser(user)
+		task, err := h.service.Get(r.Context(), ID, user.ID)
+		if err != nil {
+			switch err {
+			case ErrNotFound:
+				http.Error(w, err.Error(), http.StatusNotFound)
+				return
+			default:
+				log.Println(err)
+				http.Error(w, "Internal error", http.StatusInternalServerError)
+				return
+			}
+		}
+		w.WriteHeader(http.StatusAccepted)
+		json.NewEncoder(w).Encode(task)
+		return
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
