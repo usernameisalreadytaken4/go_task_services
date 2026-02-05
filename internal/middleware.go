@@ -56,3 +56,7 @@ func UserFromContext(ctx context.Context) (*userV1.User, bool) {
 	user, ok := ctx.Value(userContextKey).(*userV1.User)
 	return user, ok
 }
+
+func ContextWithUser(ctx context.Context, user *userV1.User) context.Context {
+	return context.WithValue(ctx, userContextKey, user)
+}

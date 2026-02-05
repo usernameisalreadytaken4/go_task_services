@@ -56,6 +56,9 @@ func (h *Handler) Handle(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, ErrInternalError.Error(), http.StatusInternalServerError)
 		}
 
+		w.WriteHeader(http.StatusCreated)
+		json.NewEncoder(w).Encode(task)
+
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}

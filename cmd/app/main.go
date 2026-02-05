@@ -38,7 +38,7 @@ func main() {
 
 	mux := http.NewServeMux()
 	userV1.UserRouter(mux, userHandler)
-	taskV1.TaskRouter(mux, taskHandler)
+	taskV1.TaskRouter(mux, taskHandler, pool)
 
 	log.Println("starting serve at :8080")
 	http.ListenAndServe(":8080", mux)

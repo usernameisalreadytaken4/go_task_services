@@ -4,12 +4,14 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
-	"log"
+	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
 
 	"github.com/golang/mock/gomock"
+	"github.com/usernameisalreadytaken4/go_task_services/internal"
+	userV1 "github.com/usernameisalreadytaken4/go_task_services/internal/user/v1"
 )
 
 type TaskTestCase struct {
@@ -35,6 +37,10 @@ type TestTask struct {
 
 func TestTaskHandle(t *testing.T) {
 
+	// проверяю как работают моки
+	// в целом, тут это стрельба из пушек по воробьям, много нагородил, чтобы показать что возвращается Created
+	// но в более сложных сервисах с более сложной логикой, или в тестировании самих сервисов это будет эффективнее
+
 	shortTaskPayload, _ := json.Marshal(map[string]string{
 		"type": "short_task",
 		"text": "Nobody cares",
@@ -55,65 +61,30 @@ func TestTaskHandle(t *testing.T) {
 
 	var body io.Reader = bytes.NewReader(shortTaskPayload)
 
+	testUser := &userV1.User{
+		ID: 1,
+	}
+
 	req := httptest.NewRequest("POST", "/api/v1/tasks", body)
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer testtoken")
 
+	req = req.WithContext(internal.ContextWithUser(req.Context(), testUser))
+
 	w := httptest.NewRecorder()
+
+	mockedService.EXPECT().
+		Create(testUser, gomock.Any()).
+		DoAndReturn(func(u *userV1.User, task *Task) (*Task, error) {
+			if task.Name != "short_task" {
+				t.Errorf("wrong name\nEXPECTED: %v\nGET: %v\n", "short_task", task.Name)
+			}
+			return &Task{ID: 1}, nil
+		})
 
 	handler.Handle(w, req)
 
-	resp := w.Result()
-
-	log.Println(resp)
-
-	// mockedService.EXPECT().GetByUserID(1).Return(result, nil)
-
-	// log.Panicln(ts)
-
-	// testCases := []*TaskTestCase{
-	// 	{
-	// 		Name:               "Create Short Task",
-	// 		Method:             "POST",
-	// 		URL:                "/api/v1/tasks",
-	// 		ResponseHTTPStatus: 201,
-	// 		Payload:            shortTaskPayload,
-	// 		Expected: func() interface{} {
-	// 			return &struct {
-	// 				Task TestTask
-	// 			}{
-	// 				Task: TestTask{
-	// 					Name:   "short_task",
-	// 					Status: "new",
-	// 				},
-	// 			}
-	// 		},
-	// 	},
-	// 	{
-	// 		Name:               "Create Long Task",
-	// 		Method:             "POST",
-	// 		URL:                "/api/v1/tasks",
-	// 		ResponseHTTPStatus: 201,
-	// 		Payload:            longTaskPayload,
-	// 		Expected: func() interface{} {
-	// 			return &struct {
-	// 				Task TestTask
-	// 			}{
-	// 				Task: TestTask{
-	// 					Name:   "long_task",
-	// 					Status: "new",
-	// 				},
-	// 			}
-	// 		},
-	// 	},
-	// }
-
-	// for _, testCase := range testCases {
-	// 	ok := t.Run(testCase.Name, func(t *testing.T) {
-	// 		// make some things
-	// 	})
-	// 	if !ok {
-	// 		break
-	// 	}
-	// }
+	if w.Code != http.StatusCreated {
+		t.Errorf("wrong status\nEXPECTED: %v\nGET: %v\n", http.StatusCreated, w.Code)
+	}
 }
