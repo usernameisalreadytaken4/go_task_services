@@ -1,23 +1,30 @@
 package user
 
 import (
+	"context"
 	"log"
 )
 
-type UserService struct {
-	repo UserRepository
+type service struct {
+	repo Repository
 }
 
-func (s *UserService) CreateUser(email, password string) (*User, error) {
-	_, err := s.repo.GetByEmail(email)
+type Service interface {
+	GetUser(context.Context, string, string) (*User, error) // для создания не факт, что лучше передавать string string
+	CreateUser(context.Context, string, string) (*User, error)
+	GetTokenByUser(context.Context, *User) (string, error)
+}
+
+func (s *service) CreateUser(ctx context.Context, email, password string) (*User, error) {
+	_, err := s.repo.GetByEmail(ctx, email)
 	if err == nil {
 		return nil, ErrUserAlreadyExists
 	}
-	return s.repo.CreateUser(email, password)
+	return s.repo.Create(ctx, email, password)
 }
 
-func (s *UserService) GetUser(email, password string) (*User, error) {
-	user, err := s.repo.GetByEmail(email)
+func (s *service) GetUser(ctx context.Context, email, password string) (*User, error) {
+	user, err := s.repo.GetByEmail(ctx, email)
 	if err != nil {
 		log.Println(err.Error())
 		return nil, ErrInternalError
@@ -28,8 +35,8 @@ func (s *UserService) GetUser(email, password string) (*User, error) {
 	return user, nil
 }
 
-func (s *UserService) GetTokenByUser(user *User) (string, error) {
-	token, err := s.repo.GetTokenByUser(*user)
+func (s *service) GetTokenByUser(ctx context.Context, user *User) (string, error) {
+	token, err := s.repo.GetToken(ctx, *user)
 	if err != nil {
 		log.Println(err.Error())
 		return "", ErrInternalError
@@ -37,8 +44,8 @@ func (s *UserService) GetTokenByUser(user *User) (string, error) {
 	return token, nil
 }
 
-func NewService(repo *UserRepository) *UserService {
-	return &UserService{
-		repo: *repo,
+func NewService(repo Repository) Service {
+	return &service{
+		repo: repo,
 	}
 }

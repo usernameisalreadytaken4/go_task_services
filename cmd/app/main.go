@@ -15,10 +15,15 @@ func main() {
 
 	dsn := "postgres://postgres:my_password@localhost:5432/task_service" // забирать из конфига
 
-	config, _ := pgxpool.ParseConfig(dsn)
-	pool, _ := pgxpool.NewWithConfig(context.Background(), config)
-
-	err := pool.Ping(context.Background())
+	config, err := pgxpool.ParseConfig(dsn)
+	if err != nil {
+		panic(err)
+	}
+	pool, err := pgxpool.NewWithConfig(context.Background(), config)
+	if err != nil {
+		panic(err)
+	}
+	err = pool.Ping(context.Background())
 	if err != nil {
 		panic(err)
 	}
@@ -27,20 +32,14 @@ func main() {
 	userService := userV1.NewService(userRepo)
 	userHandler := userV1.NewHandler(userService)
 
-	tasks := &taskV1.TaskHandler{
-		DB: pool,
-	}
+	taskRepo := taskV1.NewRepository(pool)
+	taskService := taskV1.NewService(taskRepo)
+	taskHandler := taskV1.NewHandler(taskService)
 
 	mux := http.NewServeMux()
-
-	mux.HandleFunc("/api/v1/auth/register", userHandler.Register)
-	mux.HandleFunc("/api/v1/auth/login", userHandler.Login)
-
-	mux.HandleFunc("/api/v1/tasks", tasks.Handle)
-	mux.HandleFunc("/api/v1/tasks/", tasks.HandleOne)
-
-	http.Handle("/", mux)
+	userV1.UserRouter(mux, userHandler)
+	taskV1.TaskRouter(mux, taskHandler, pool)
 
 	log.Println("starting serve at :8080")
-	http.ListenAndServe(":8080", nil)
+	http.ListenAndServe(":8080", mux)
 }

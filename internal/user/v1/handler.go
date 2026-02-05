@@ -13,8 +13,8 @@ type RegisterBody struct {
 	Password string `json:"password"`
 }
 
-type UserHandler struct {
-	service UserService
+type Handler struct {
+	service Service
 }
 
 var (
@@ -43,7 +43,7 @@ func ValidatePassword(password string) error {
 	return nil
 }
 
-func (h *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	var reg RegisterBody
 	if err := json.NewDecoder(r.Body).Decode(&reg); err != nil {
 		http.Error(w, "bad json", http.StatusBadRequest)
@@ -57,7 +57,7 @@ func (h *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	user, err := h.service.CreateUser(reg.Email, reg.Password)
+	user, err := h.service.CreateUser(r.Context(), reg.Email, reg.Password)
 	if err != nil {
 		switch err {
 		case ErrInternalError:
@@ -75,13 +75,13 @@ func (h *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(&user)
 }
 
-func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	email, pass, ok := r.BasicAuth()
 	if !ok {
 		http.Error(w, ErrInvalidCredentials.Error(), http.StatusUnauthorized)
 		return
 	}
-	user, err := h.service.GetUser(email, pass)
+	user, err := h.service.GetUser(r.Context(), email, pass)
 	switch err {
 	case ErrInvalidCredentials:
 		http.Error(w, ErrInternalError.Error(), http.StatusUnauthorized)
@@ -91,7 +91,7 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := h.service.GetTokenByUser(user)
+	token, err := h.service.GetTokenByUser(r.Context(), user)
 	if err != nil {
 		switch err {
 		case ErrInternalError:
@@ -112,8 +112,8 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(&tokenMap)
 }
 
-func NewHandler(service *UserService) *UserHandler {
-	return &UserHandler{
-		service: *service,
+func NewHandler(service Service) *Handler {
+	return &Handler{
+		service: service,
 	}
 }

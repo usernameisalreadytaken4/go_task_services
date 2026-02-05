@@ -1,0 +1,1 @@
+alter table tasks add column "type" varchar(64) default '';
