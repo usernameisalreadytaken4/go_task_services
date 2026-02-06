@@ -9,6 +9,7 @@ import (
 
 	taskV1 "github.com/usernameisalreadytaken4/go_task_services/internal/task/v1"
 	userV1 "github.com/usernameisalreadytaken4/go_task_services/internal/user/v1"
+	worker "github.com/usernameisalreadytaken4/go_task_services/internal/worker/tasks"
 )
 
 func main() {
@@ -39,6 +40,17 @@ func main() {
 	mux := http.NewServeMux()
 	userV1.UserRouter(mux, userHandler)
 	taskV1.TaskRouter(mux, taskHandler, pool)
+
+	registry := worker.NewRegistry(
+		worker.NewShortTask(taskRepo),
+		worker.NewLongTask(taskRepo),
+	)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	taskSource := worker.NewPostgresSource(taskRepo)
+	worker.StartWorkerPool(ctx, taskRepo, registry, taskSource, 2)
 
 	log.Println("starting serve at :8080")
 	http.ListenAndServe(":8080", mux)

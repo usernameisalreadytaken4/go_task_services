@@ -66,10 +66,10 @@ func (mr *MockServiceMockRecorder) Get(arg0, arg1, arg2 interface{}) *gomock.Cal
 }
 
 // GetByUserID mocks base method.
-func (m *MockService) GetByUserID(arg0 context.Context, arg1 int) ([]*Task, error) {
+func (m *MockService) GetByUserID(arg0 context.Context, arg1 int) ([]Task, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetByUserID", arg0, arg1)
-	ret0, _ := ret[0].([]*Task)
+	ret0, _ := ret[0].([]Task)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
