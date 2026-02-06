@@ -1,7 +1,7 @@
 package worker
 
 import (
-	"errors"
+	"fmt"
 
 	taskV1 "github.com/usernameisalreadytaken4/go_task_services/internal/task/v1"
 )
@@ -18,10 +18,10 @@ func NewRegistry(executors ...Executor) *Registry {
 	return &Registry{Tasks: tasks}
 }
 
-func (r *Registry) Get(taskName taskV1.TaskType) (Executor, error) {
-	executor, ok := r.Tasks[taskName]
+func (r *Registry) Get(taskType taskV1.TaskType) (Executor, error) {
+	executor, ok := r.Tasks[taskType]
 	if !ok {
-		return nil, errors.New("task not found")
+		return nil, fmt.Errorf("executor '%v' not found", taskType)
 	}
 	return executor, nil
 }

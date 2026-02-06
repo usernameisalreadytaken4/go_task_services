@@ -50,7 +50,7 @@ func main() {
 	defer cancel()
 
 	taskSource := worker.NewPostgresSource(taskRepo)
-	worker.StartWorkerPool(ctx, taskRepo, registry, taskSource, 5)
+	worker.StartWorkerPool(ctx, taskRepo, registry, taskSource, 2)
 
 	log.Println("starting serve at :8080")
 	http.ListenAndServe(":8080", mux)

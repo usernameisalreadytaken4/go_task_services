@@ -23,9 +23,9 @@ type Repository interface {
 func (r *repository) Save(ctx context.Context, task *Task) (*Task, error) {
 	err := r.DB.QueryRow(
 		ctx,
-		`INSERT INTO tasks(user_id, payload) VALUES ($1, $2)
+		`INSERT INTO tasks(user_id, payload, type) VALUES ($1, $2, $3)
 		RETURNING id, created, status`,
-		task.User.ID, task.Payload).Scan(&task.ID, &task.Created, &task.Status)
+		task.User.ID, task.Payload, task.Type).Scan(&task.ID, &task.Created, &task.Status)
 	if err != nil {
 		log.Println("Insert error:", err.Error())
 		return nil, ErrInternalError
@@ -49,6 +49,7 @@ func (r *repository) Update(ctx context.Context, task *Task) error {
 		task.ID,
 	)
 	if err != nil {
+		log.Println(err.Error())
 		return err
 	}
 	return nil
@@ -115,8 +116,11 @@ func (r *repository) GetByUserID(ctx context.Context, userID int) ([]Task, error
 func (r *repository) GetNextTask(ctx context.Context) (*Task, error) {
 	var task Task
 
-	err := r.DB.QueryRow(ctx, `SELECT id, type, created, status, payload`).Scan(
-		&task.ID, &task.Type, &task.Created, &task.Status, &task.Payload)
+	err := r.DB.QueryRow(ctx,
+		`SELECT id, type, created, status, payload, result
+		FROM tasks WHERE status = 'new' 
+		ORDER BY created limit 1;`).Scan(
+		&task.ID, &task.Type, &task.Created, &task.Status, &task.Payload, &task.Result)
 	if err != nil && err == pgx.ErrNoRows {
 		return nil, err
 	}

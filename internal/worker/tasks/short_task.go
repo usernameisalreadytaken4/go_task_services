@@ -17,9 +17,15 @@ func (ShortTask) Type() taskV1.TaskType {
 }
 
 func (t *ShortTask) Execute(ctx context.Context, task taskV1.Task) error {
+	now := time.Now()
+	task.Started = &now
+
 	time.Sleep(time.Second * 3)
-	task.Status = "DONE"
-	t.repo.Save(ctx, &task)
+
+	task.Status = "done"
+	now = time.Now()
+	task.Finished = &now
+	t.repo.Update(ctx, &task)
 	return nil
 }
 

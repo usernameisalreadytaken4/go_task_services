@@ -23,7 +23,7 @@ func StartWorkerPool(ctx context.Context, repo taskV1.Repository, registry *Regi
 			default:
 				task, err := taskSource.Fetch(ctx)
 				if err != nil {
-					time.Sleep(time.Second)
+					time.Sleep(time.Second * 5)
 					continue
 				}
 

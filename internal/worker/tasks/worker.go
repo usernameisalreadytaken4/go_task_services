@@ -3,6 +3,7 @@ package worker
 import (
 	"context"
 	"log"
+	"time"
 
 	taskV1 "github.com/usernameisalreadytaken4/go_task_services/internal/task/v1"
 )
@@ -14,24 +15,25 @@ type Worker struct {
 
 func (w *Worker) Run(ctx context.Context, tasks <-chan taskV1.Task) {
 	for {
+		time.Sleep(time.Second * 5)
 		select {
 		case <-ctx.Done():
 			return
 		case task, ok := <-tasks:
 			if !ok {
-				return
+				continue
 			}
 
 			executor, err := w.registry.Get(task.Type)
 			if err != nil {
 				log.Println(err.Error())
-				return
+				continue
 			}
 
 			err = executor.Execute(ctx, task)
 			if err != nil {
 				log.Println(err.Error())
-				return
+				continue
 			}
 		}
 	}
