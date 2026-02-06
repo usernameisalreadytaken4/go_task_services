@@ -8,14 +8,21 @@ import (
 )
 
 // i/o bound
-type ShortTask struct{}
+type ShortTask struct {
+	repo taskV1.Repository
+}
 
-func (ShortTask) Name() taskV1.TaskType {
+func (ShortTask) Type() taskV1.TaskType {
 	return "short_task"
 }
 
 func (t *ShortTask) Execute(ctx context.Context, task taskV1.Task) error {
 	time.Sleep(time.Second * 3)
 	task.Status = "DONE"
+	t.repo.Save(ctx, &task)
 	return nil
+}
+
+func NewShortTask(repo taskV1.Repository) *ShortTask {
+	return &ShortTask{repo: repo}
 }

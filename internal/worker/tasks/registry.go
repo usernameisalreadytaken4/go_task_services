@@ -18,10 +18,10 @@ func NewRegistry(executors ...Executor) *Registry {
 	return &Registry{Tasks: tasks}
 }
 
-func (r *Registry) Get(taskName taskV1.TaskType) (Executor, error)																																																																																																																																																																																																					xecutor, error) {
+func (r *Registry) Get(taskName taskV1.TaskType) (Executor, error) {
 	executor, ok := r.Tasks[taskName]
 	if !ok {
-		return nil, errors.New("Task not found")
+		return nil, errors.New("task not found")
 	}
 	return executor, nil
 }

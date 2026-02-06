@@ -8,13 +8,15 @@ import (
 )
 
 // cpu bound
-type LongTask struct{}
+type LongTask struct {
+	repo taskV1.Repository
+}
 
-func (LongTask) Name() taskV1.TaskType {
+func (LongTask) Type() taskV1.TaskType {
 	return "long_task"
 }
 
-func (t *LongTask) Execute(ctx context.Context, task *taskV1.Task) error {
+func (t *LongTask) Execute(ctx context.Context, task taskV1.Task) error {
 	payload := task.Payload
 	hash := []byte(payload)
 	for i := 0; i < 100000; i++ {
@@ -25,4 +27,8 @@ func (t *LongTask) Execute(ctx context.Context, task *taskV1.Task) error {
 	task.Status = "DONE"
 	// сохранить
 	return nil
+}
+
+func NewLongTask(repo taskV1.Repository) *LongTask {
+	return &LongTask{repo: repo}
 }
